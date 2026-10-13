@@ -1,0 +1,54 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 220" width="100%" height="100%">
+  <defs>
+    <linearGradient id="cuRedGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#E11D48"/>
+      <stop offset="100%" stop-color="#9F1239"/>
+    </linearGradient>
+    <linearGradient id="techBlueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="darkBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0F172A"/>
+      <stop offset="100%" stop-color="#1E293B"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background Icon Container (Hexagon Code Shield) -->
+  <g transform="translate(40, 20)">
+    <!-- Hexagon Outer Border -->
+    <polygon points="90,10 165,52 165,138 90,180 15,138 15,52" fill="url(#darkBg)" stroke="url(#cuRedGrad)" stroke-width="5" stroke-linejoin="round" />
+    
+    <!-- Inner Accent Lines -->
+    <polygon points="90,22 153,58 153,132 90,168 27,132 27,58" fill="none" stroke="#38BDF8" stroke-width="1.5" stroke-opacity="0.4" stroke-dasharray="6,4" />
+    
+    <!-- Code Brackets & Slash -->
+    <!-- Left Bracket < -->
+    <path d="M68 70 L46 95 L68 120" fill="none" stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Center Slash / -->
+    <path d="M96 65 L84 125" fill="none" stroke="url(#cuRedGrad)" stroke-width="7" stroke-linecap="round" />
+    
+    <!-- Right Bracket > -->
+    <path d="M112 70 L134 95 L112 120" fill="none" stroke="#38BDF8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" />
+    
+    <!-- Pulse Node at Bottom -->
+    <circle cx="90" cy="150" r="4" fill="#38BDF8" />
+  </g>
+
+  <!-- Typography: CodeSkill -->
+  <text x="240" y="108" font-family="'Outfit', 'Inter', -apple-system, sans-serif" font-weight="900" font-size="64" letter-spacing="-1.5">
+    <tspan fill="#0F172A">Code</tspan>
+    <tspan fill="url(#cuRedGrad)">Skill</tspan>
+  </text>
+
+  <!-- Tagline / University Badge -->
+  <g transform="translate(242, 126)">
+    <!-- University Pill Badge -->
+    <rect x="0" y="0" width="220" height="24" rx="12" fill="#FEE2E2" stroke="#FECDD3" stroke-width="1"/>
+    <text x="110" y="16" font-family="'Inter', sans-serif" font-size="11" font-weight="700" fill="#9F1239" text-anchor="middle" letter-spacing="0.5">CHANDIGARH UNIVERSITY</text>
+    
+    <!-- Portal Subtitle -->
+    <text x="235" y="16" font-family="'Inter', sans-serif" font-size="12" font-weight="600" fill="#64748B" letter-spacing="1.5">ASSESSMENT &amp; CODING PLATFORM</text>
+  </g>
+</svg>

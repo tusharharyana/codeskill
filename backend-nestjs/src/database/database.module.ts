@@ -1,0 +1,106 @@
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigService } from '@nestjs/config';
+
+import { User } from './entities/user.entity';
+import { Problem } from './entities/problem.entity';
+import { ProblemMetadata } from './entities/problem-metadata.entity';
+import { ProblemStatement } from './entities/problem-statement.entity';
+import { ProblemConfig } from './entities/problem-config.entity';
+import { ProblemTestCase } from './entities/problem-testcase.entity';
+import { Question } from './entities/question.entity';
+import { QuestionBank } from './entities/question-bank.entity';
+import { Assessment } from './entities/assessment.entity';
+import { AssessmentAttempt } from './entities/assessment-attempt.entity';
+import { Submission } from './entities/submission.entity';
+import { Contest } from './entities/contest.entity';
+import { ContestAttempt } from './entities/contest-attempt.entity';
+import { Company } from './entities/company.entity';
+import { CompanyUser } from './entities/company-user.entity';
+import { Job } from './entities/job.entity';
+import { Application } from './entities/application.entity';
+import { University } from './entities/university.entity';
+import { UniversityUser } from './entities/university-user.entity';
+import { Batch } from './entities/batch.entity';
+import { StudentEnrollment } from './entities/student-enrollment.entity';
+import { Discussion } from './entities/discussion.entity';
+import { DiscussionReply } from './entities/discussion-reply.entity';
+import { AuditLog } from './entities/audit-log.entity';
+import { EmailJob } from './entities/email-job.entity';
+import { ExamSession } from './entities/exam-session.entity';
+import { ExamSecurityEvent } from './entities/exam-security-event.entity';
+import { CognitiveGameAttempt } from './entities/cognitive-game-attempt.entity';
+import { CognitiveGame } from './entities/cognitive-game.entity';
+
+const entities = [
+  User,
+  Problem,
+  ProblemMetadata,
+  ProblemStatement,
+  ProblemConfig,
+  ProblemTestCase,
+  Question,
+  QuestionBank,
+  Assessment,
+  AssessmentAttempt,
+  Submission,
+  Contest,
+  ContestAttempt,
+  Company,
+  CompanyUser,
+  Job,
+  Application,
+  University,
+  UniversityUser,
+  Batch,
+  StudentEnrollment,
+  Discussion,
+  DiscussionReply,
+  AuditLog,
+  EmailJob,
+  ExamSession,
+  ExamSecurityEvent,
+  CognitiveGameAttempt,
+  CognitiveGame,
+];
+
+@Module({
+  imports: [
+    TypeOrmModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: async (configService: ConfigService) => {
+        const url = configService.get<string>('database.postgres.url');
+        if (url) {
+          return {
+            type: 'postgres',
+            url,
+            autoLoadEntities: true,
+            synchronize: process.env.NODE_ENV !== 'production',
+            invalidWhereValuesBehavior: {
+              null: 'ignore',
+            },
+          } as any;
+        }
+        return {
+          type: 'postgres',
+          host: configService.get<string>('database.postgres.host'),
+          port: configService.get<number>('database.postgres.port'),
+          username: configService.get<string>('database.postgres.username'),
+          password: configService.get<string>('database.postgres.password'),
+          database: configService.get<string>('database.postgres.database'),
+          ssl: configService.get<boolean>('database.postgres.ssl')
+            ? { rejectUnauthorized: false }
+            : false,
+          autoLoadEntities: true,
+          synchronize: process.env.NODE_ENV !== 'production',
+          invalidWhereValuesBehavior: {
+            null: 'ignore',
+          },
+        } as any;
+      },
+    }),
+    TypeOrmModule.forFeature(entities),
+  ],
+  exports: [TypeOrmModule],
+})
+export class DatabaseModule {}

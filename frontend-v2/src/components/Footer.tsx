@@ -1,0 +1,24 @@
+"use client";
+
+import { usePathname } from "next/navigation";
+import { FooterSectionView } from "@/components/ui/footer-section";
+
+export function Footer() {
+  const pathname = usePathname();
+
+  const isHidden =
+    !pathname ||
+    pathname.startsWith("/admin") ||
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname.includes("/take") ||
+    pathname.match(/^\/(problems|contest)\/[^/]+$/);
+
+  if (isHidden) return null;
+
+  return (
+    <div className="w-full bg-background mt-auto">
+      <FooterSectionView />
+    </div>
+  );
+}
