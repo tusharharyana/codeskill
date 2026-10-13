@@ -1,5 +1,6 @@
 import { Repository } from 'typeorm';
 import { Question as QuestionEntity } from '../database/entities/question.entity';
+import { Problem as ProblemEntity } from '../database/entities/problem.entity';
 import { QuestionBank as QuestionBankEntity } from '../database/entities/question-bank.entity';
 import { AuditLog as AuditLogEntity } from '../database/entities/audit-log.entity';
 import { CreateQuestionDto } from './dto/create-question.dto';
@@ -9,9 +10,11 @@ import { CreateQuestionBankDto } from './dto/create-question-bank.dto';
 export declare class QuestionsService {
     private readonly questionRepository;
     private readonly questionBankRepository;
+    private readonly problemRepository;
     private readonly auditLogRepository;
-    constructor(questionRepository: Repository<QuestionEntity>, questionBankRepository: Repository<QuestionBankEntity>, auditLogRepository: Repository<AuditLogEntity>);
+    constructor(questionRepository: Repository<QuestionEntity>, questionBankRepository: Repository<QuestionBankEntity>, problemRepository: Repository<ProblemEntity>, auditLogRepository: Repository<AuditLogEntity>);
     private normalizeCategories;
+    private createPublishedProblem;
     findAll(query: QueryQuestionsDto): Promise<{
         questions: QuestionEntity[];
         pagination: {

@@ -50,22 +50,73 @@ const common_1 = require("@nestjs/common");
 const typeorm_1 = require("@nestjs/typeorm");
 const typeorm_2 = require("typeorm");
 const question_entity_1 = require("../database/entities/question.entity");
+const problem_entity_1 = require("../database/entities/problem.entity");
 const question_bank_entity_1 = require("../database/entities/question-bank.entity");
 const audit_log_entity_1 = require("../database/entities/audit-log.entity");
 const XLSX = __importStar(require("xlsx"));
 let QuestionsService = class QuestionsService {
     questionRepository;
     questionBankRepository;
+    problemRepository;
     auditLogRepository;
-    constructor(questionRepository, questionBankRepository, auditLogRepository) {
+    constructor(questionRepository, questionBankRepository, problemRepository, auditLogRepository) {
         this.questionRepository = questionRepository;
         this.questionBankRepository = questionBankRepository;
+        this.problemRepository = problemRepository;
         this.auditLogRepository = auditLogRepository;
     }
     normalizeCategories(categories) {
         return [
             ...new Set(categories.map((category) => category.trim()).filter(Boolean)),
         ];
+    }
+    async createPublishedProblem(question) {
+        if (question.questionType !== 'DSA')
+            return;
+        const baseSlug = (question.slug || question.title || question.question)
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '') || `problem-${question.id}`;
+        let slug = baseSlug;
+        let suffix = 2;
+        while (await this.problemRepository.exists({ where: { slug } })) {
+            slug = `${baseSlug}-${suffix++}`;
+        }
+        const categories = Array.isArray(question.metadata?.categories)
+            ? question.metadata.categories
+            : [];
+        const tags = [...new Set([question.topic, ...categories, ...(question.tags || [])])]
+            .map((tag) => tag?.trim())
+            .filter(Boolean);
+        await this.problemRepository.save(this.problemRepository.create({
+            title: question.title || question.question,
+            slug,
+            description: question.problemStatement || question.description || question.question,
+            inputFormat: question.inputFormat,
+            outputFormat: question.outputFormat,
+            examples: question.examples || [],
+            visibility: 'Published',
+            difficulty: question.difficulty.charAt(0).toUpperCase() +
+                question.difficulty.slice(1).toLowerCase(),
+            constraints: Array.isArray(question.constraints)
+                ? question.constraints.join('\n')
+                : question.constraints,
+            tags,
+            timeLimit: question.timeLimit,
+            memoryLimit: question.memoryLimit,
+            supportedLanguages: question.supportedLanguages || [],
+            starterCode: question.starterCode,
+            testCases: (question.testCases || []).map((testCase) => ({
+                input: testCase.input,
+                output: testCase.expectedOutput,
+                isHidden: testCase.isHidden,
+                explanation: '',
+            })),
+            hints: question.hints || [],
+            editorial: question.explanation,
+            isPublished: true,
+        }));
     }
     async findAll(query) {
         const page = Math.max(1, Number(query.page) || 1);
@@ -296,6 +347,7 @@ let QuestionsService = class QuestionsService {
             approvedAt: new Date(),
         });
         const question = await this.questionRepository.save(newQuestion);
+        await this.createPublishedProblem(question);
         const auditLog = this.auditLogRepository.create({
             actorId: adminUser.id || adminUser._id,
             actorEmail: adminUser.email,
@@ -1109,8 +1161,10 @@ exports.QuestionsService = QuestionsService = __decorate([
     (0, common_1.Injectable)(),
     __param(0, (0, typeorm_1.InjectRepository)(question_entity_1.Question)),
     __param(1, (0, typeorm_1.InjectRepository)(question_bank_entity_1.QuestionBank)),
-    __param(2, (0, typeorm_1.InjectRepository)(audit_log_entity_1.AuditLog)),
+    __param(2, (0, typeorm_1.InjectRepository)(problem_entity_1.Problem)),
+    __param(3, (0, typeorm_1.InjectRepository)(audit_log_entity_1.AuditLog)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository])
 ], QuestionsService);

@@ -9,6 +9,7 @@ describe('QuestionsService - True/False Questions Handling', () => {
   let service: QuestionsService;
   let mockQuestionRepo: any;
   let mockQuestionBankRepo: any;
+  let mockProblemRepo: any;
   let mockAuditLogRepo: any;
 
   const mockAdminUser = { id: 'admin-uuid-1', email: 'admin@codeskill.com' };
@@ -27,6 +28,12 @@ describe('QuestionsService - True/False Questions Handling', () => {
       save: jest.fn(),
     };
 
+    mockProblemRepo = {
+      create: jest.fn((dto) => dto),
+      save: jest.fn(),
+      exists: jest.fn().mockResolvedValue(false),
+    };
+
     mockAuditLogRepo = {
       create: jest.fn((dto) => dto),
       save: jest.fn().mockResolvedValue(true),
@@ -35,6 +42,7 @@ describe('QuestionsService - True/False Questions Handling', () => {
     service = new QuestionsService(
       mockQuestionRepo,
       mockQuestionBankRepo,
+      mockProblemRepo,
       mockAuditLogRepo,
     );
   });

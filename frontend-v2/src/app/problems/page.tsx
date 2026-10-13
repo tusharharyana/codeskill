@@ -7,12 +7,19 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { problemsAPI } from "@/config/api";
 import { Spinner } from "@/components/ui/spinner";
 
+const CATEGORIES = ["All Topics", "Arrays", "Strings", "Dynamic Programming", "Trees", "Graphs", "Math"];
+
 export default function ProblemsPage() {
+  const searchParams = useSearchParams();
   const [search, setSearch] = useState("");
-  const [activeCategory, setActiveCategory] = useState("All Topics");
+  const requestedCategory = searchParams.get("category") || "All Topics";
+  const activeCategory = CATEGORIES.includes(requestedCategory)
+    ? requestedCategory
+    : "All Topics";
   const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -41,7 +48,16 @@ export default function ProblemsPage() {
     });
   }, [currentPage, debouncedSearch, activeCategory]);
 
-  const categories = ["All Topics", "Arrays", "Strings", "Dynamic Programming", "Trees", "Graphs", "Math"];
+  const selectCategory = (category: string) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (category === "All Topics") {
+      params.delete("category");
+    } else {
+      params.set("category", category);
+    }
+    window.history.pushState(null, "", `/problems${params.size ? `?${params}` : ""}`);
+    setCurrentPage(1);
+  };
 
   const filtered = problems;
 
@@ -91,10 +107,10 @@ export default function ProblemsPage() {
 
         {/* Category Chips */}
         <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-2">
-          {categories.map((cat) => (
+          {CATEGORIES.map((cat) => (
             <button 
               key={cat}
-              onClick={() => setActiveCategory(cat)}
+              onClick={() => selectCategory(cat)}
               className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all border ${
                 activeCategory === cat 
                   ? "bg-foreground text-background border-foreground" 

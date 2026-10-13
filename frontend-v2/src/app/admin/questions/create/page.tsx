@@ -188,6 +188,9 @@ function UnifiedQuestionForm() {
 
       let payload: any = {
         question: store.metadata.title, // Map title to question for legacy compatibility
+        title: store.metadata.title,
+        slug: store.metadata.slug,
+        description: store.statement.description,
         topic: store.metadata.categories[0] || "General",
         categories: store.metadata.categories,
         difficulty: store.metadata.difficulty.toLowerCase(),

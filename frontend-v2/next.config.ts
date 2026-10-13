@@ -30,6 +30,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: "/problems/arrays",
+        destination: "/problems?category=Arrays",
+        permanent: false,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

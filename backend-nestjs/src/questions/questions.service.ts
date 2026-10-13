@@ -6,6 +6,7 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, Brackets, In } from 'typeorm';
 import { Question as QuestionEntity } from '../database/entities/question.entity';
+import { Problem as ProblemEntity } from '../database/entities/problem.entity';
 import { QuestionBank as QuestionBankEntity } from '../database/entities/question-bank.entity';
 import { AuditLog as AuditLogEntity } from '../database/entities/audit-log.entity';
 import { CreateQuestionDto } from './dto/create-question.dto';
@@ -21,6 +22,8 @@ export class QuestionsService {
     private readonly questionRepository: Repository<QuestionEntity>,
     @InjectRepository(QuestionBankEntity)
     private readonly questionBankRepository: Repository<QuestionBankEntity>,
+    @InjectRepository(ProblemEntity)
+    private readonly problemRepository: Repository<ProblemEntity>,
     @InjectRepository(AuditLogEntity)
     private readonly auditLogRepository: Repository<AuditLogEntity>,
   ) {}
@@ -29,6 +32,62 @@ export class QuestionsService {
     return [
       ...new Set(categories.map((category) => category.trim()).filter(Boolean)),
     ];
+  }
+
+  private async createPublishedProblem(question: QuestionEntity) {
+    if (question.questionType !== 'DSA') return;
+
+    const baseSlug = (question.slug || question.title || question.question)
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '') || `problem-${question.id}`;
+
+    let slug = baseSlug;
+    let suffix = 2;
+    while (await this.problemRepository.exists({ where: { slug } })) {
+      slug = `${baseSlug}-${suffix++}`;
+    }
+
+    const categories = Array.isArray(question.metadata?.categories)
+      ? question.metadata.categories
+      : [];
+    const tags = [...new Set([question.topic, ...categories, ...(question.tags || [])])]
+      .map((tag) => tag?.trim())
+      .filter(Boolean);
+
+    await this.problemRepository.save(
+      this.problemRepository.create({
+        title: question.title || question.question,
+        slug,
+        description:
+          question.problemStatement || question.description || question.question,
+        inputFormat: question.inputFormat,
+        outputFormat: question.outputFormat,
+        examples: question.examples || [],
+        visibility: 'Published',
+        difficulty:
+          question.difficulty.charAt(0).toUpperCase() +
+          question.difficulty.slice(1).toLowerCase(),
+        constraints: Array.isArray(question.constraints)
+          ? question.constraints.join('\n')
+          : question.constraints,
+        tags,
+        timeLimit: question.timeLimit,
+        memoryLimit: question.memoryLimit,
+        supportedLanguages: question.supportedLanguages || [],
+        starterCode: question.starterCode as unknown as Record<string, string>,
+        testCases: (question.testCases || []).map((testCase) => ({
+          input: testCase.input,
+          output: testCase.expectedOutput,
+          isHidden: testCase.isHidden,
+          explanation: '',
+        })),
+        hints: question.hints || [],
+        editorial: question.explanation,
+        isPublished: true,
+      }),
+    );
   }
 
   async findAll(query: QueryQuestionsDto) {
@@ -333,6 +392,7 @@ export class QuestionsService {
     } as any) as unknown as QuestionEntity;
 
     const question = await this.questionRepository.save(newQuestion);
+    await this.createPublishedProblem(question);
 
     const auditLog = this.auditLogRepository.create({
       actorId: adminUser.id || adminUser._id,
