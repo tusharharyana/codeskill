@@ -1,0 +1,29 @@
+services:
+  postgres-dev:
+    image: postgres:15-alpine
+    container_name: codeskill-local-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: codeskill
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - codeskill-local-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d codeskill"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis-dev:
+    image: redis:7-alpine
+    container_name: codeskill-local-redis
+    ports:
+      - "127.0.0.1:6380:6379"
+    volumes:
+      - codeskill-local-redis-data:/data
+
+volumes:
+  codeskill-local-postgres-data:
+  codeskill-local-redis-data:

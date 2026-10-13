@@ -226,52 +226,6 @@ export function AuthUI({ signInContent = {}, signUpContent = {}, children }: Aut
 
   const currentContent = finalSignInContent;
 
-  const [quote, setQuote] = useState<{ text: string; author: string }>(currentContent.quote);
-  const [isQuoteLoading, setIsQuoteLoading] = useState(true);
-
-  useEffect(() => {
-    let isMounted = true;
-    let rotationInterval: NodeJS.Timeout;
-
-    const fetchQuotes = async () => {
-      try {
-        const response = await fetch("https://type.fit/api/quotes");
-        if (!response.ok) throw new Error("Network response was not ok");
-        const data = await response.json();
-        
-        if (Array.isArray(data) && data.length > 0) {
-          const cleaned = data.map((q: any) => ({
-            text: q.text,
-            author: (q.author || "Unknown").replace(/,\s*type\.fit$/, "")
-          })).filter(q => q.text);
-
-          if (isMounted && cleaned.length > 0) {
-            const pickRandom = () => cleaned[Math.floor(Math.random() * cleaned.length)];
-            setQuote(pickRandom());
-            setIsQuoteLoading(false);
-
-            rotationInterval = setInterval(() => {
-              setQuote(pickRandom());
-            }, 10000);
-          }
-        }
-      } catch (error) {
-        console.error("Error fetching quotes:", error);
-        if (isMounted) {
-          setQuote(currentContent.quote);
-          setIsQuoteLoading(false);
-        }
-      }
-    };
-
-    fetchQuotes();
-
-    return () => {
-      isMounted = false;
-      if (rotationInterval) clearInterval(rotationInterval);
-    };
-  }, [currentContent.quote]);
-
   return (
     <div className="w-full min-h-screen md:grid md:grid-cols-2">
       <style>{`
@@ -293,25 +247,16 @@ export function AuthUI({ signInContent = {}, signUpContent = {}, children }: Aut
         
         <div className="relative z-10 flex h-full flex-col items-center justify-end p-8 pb-16">
             <blockquote className="space-y-6 text-center text-white max-w-lg min-h-[140px] flex flex-col justify-end transition-opacity duration-500">
-              {isQuoteLoading ? (
-                <div className="flex flex-col items-center justify-center space-y-4 opacity-70">
-                  <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  <p className="text-sm font-medium tracking-wide">Loading inspiration...</p>
-                </div>
-              ) : (
-                <>
-                  <p className="text-2xl font-bold leading-tight drop-shadow-md">
-                    “<Typewriter
-                        key={quote.text}
-                        text={quote.text}
-                        speed={50}
-                      />”
-                  </p>
-                  <cite className="block text-sm font-medium text-white/80 not-italic uppercase tracking-widest drop-shadow-sm">
-                      — {quote.author}
-                  </cite>
-                </>
-              )}
+              <p className="text-2xl font-bold leading-tight drop-shadow-md">
+                “<Typewriter
+                    key={currentContent.quote.text}
+                    text={currentContent.quote.text}
+                    speed={50}
+                  />”
+              </p>
+              <cite className="block text-sm font-medium text-white/80 not-italic uppercase tracking-widest drop-shadow-sm">
+                — {currentContent.quote.author}
+              </cite>
             </blockquote>
         </div>
       </div>

@@ -2,8 +2,9 @@
 
 import { AuthProvider } from "@/context/AuthContext";
 import { ReactNode } from "react";
-import { GoogleOAuthProvider } from "@react-oauth/google";
-import { googleClientId, googleOAuthEnabled } from "@/config/auth";
+// Google OAuth is temporarily disabled for local admin/student login debugging.
+// import { GoogleOAuthProvider } from "@react-oauth/google";
+// import { googleClientId, googleOAuthEnabled } from "@/config/auth";
 
 import { ThemeProvider } from "@/context/ThemeContext";
 
@@ -19,13 +20,7 @@ export function Providers({ children }: { children: ReactNode }) {
 
   return (
     <ThemeProvider defaultTheme="light">
-      {googleOAuthEnabled ? (
-        <GoogleOAuthProvider clientId={googleClientId}>
-          {content}
-        </GoogleOAuthProvider>
-      ) : (
-        content
-      )}
+      {content}
     </ThemeProvider>
   );
 }

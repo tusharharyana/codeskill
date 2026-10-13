@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { useSearchParams } from "next/navigation";
 import { adminContestsAPI } from "@/config/api";
 import {
@@ -218,25 +219,55 @@ export default function ContestResultsPage() {
     }
   };
 
-  // Handle CSV Export
-  const handleExportCsv = async () => {
+  // Handle Excel Export
+  const handleExportExcel = async () => {
     if (!selectedContestId) return;
+
     try {
-      const res = await adminContestsAPI.exportResultsCsv(selectedContestId);
-      const blob = new Blob([res.data], { type: "text/csv;charset=utf-8;" });
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.setAttribute(
-        "download",
-        `contest-${selectedContest?.slug || selectedContestId}-results.csv`,
-      );
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
+      const res = await adminContestsAPI.getResults(selectedContestId, {
+        search,
+        status: statusFilter === "ALL" ? "" : statusFilter,
+        minScore,
+        maxScore,
+        page: 1,
+        limit: 10000,
+      });
+
+      const rows = (res.data?.results || []).map((attempt: AttemptResult) => ({
+        "Student ID": attempt.user?.id || "",
+        "Student Name": attempt.user?.name || "",
+        "Student Email": attempt.user?.email || "",
+        "Username": attempt.user?.username || "",
+        "Attempt Number": attempt.attemptNumber || 1,
+        "Submission Time": attempt.submittedAt || "Not submitted",
+        "Started At": attempt.startedAt || "",
+        "Duration (seconds)": attempt.durationSeconds ?? "",
+        "Score": Number(attempt.score) || 0,
+        "Problems Solved": attempt.problemsSolved || 0,
+        "Status": attempt.status || "",
+        "Warnings": attempt.warnings || 0,
+        "Violations": Array.isArray(attempt.violations) ? attempt.violations.map((v) => v.type).join(" | ") : "",
+      }));
+
+      if (rows.length === 0) {
+        alert("No contest results are available to export.");
+        return;
+      }
+
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Contest Results");
+
+      const contestName = selectedContest?.title || res.data?.contest?.title || "contest";
+      const safeFileName = contestName
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "") || "contest";
+
+      XLSX.writeFile(workbook, `contest-results-${safeFileName}-${selectedContestId}.xlsx`);
     } catch (err) {
-      alert("Failed to export contest results CSV.");
+      console.error("Failed to export contest results Excel file", err);
+      alert("Failed to export contest results Excel file.");
     }
   };
 
@@ -336,11 +367,10 @@ export default function ContestResultsPage() {
                 type="button"
                 onClick={handleTogglePublish}
                 disabled={publishing}
-                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-xs ${
-                  resultsData?.contest?.resultsPublished
+                className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all shadow-xs ${resultsData?.contest?.resultsPublished
                     ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/20"
                     : "bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-700"
-                }`}
+                  }`}
                 title="Toggle whether students can view their score and ranking"
               >
                 {publishing ? (
@@ -355,11 +385,11 @@ export default function ContestResultsPage() {
 
               <button
                 type="button"
-                onClick={handleExportCsv}
+                onClick={handleExportExcel}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm bg-primary text-primary-foreground hover:bg-primary/90 transition-all shadow-xs"
               >
                 <Download className="w-4 h-4" />
-                Export CSV
+                Download Excel
               </button>
             </>
           )}
@@ -585,9 +615,8 @@ export default function ContestResultsPage() {
                   return (
                     <tr
                       key={attempt.id}
-                      className={`hover:bg-muted/30 transition-colors ${
-                        isSelected ? "bg-sky-500/5" : ""
-                      }`}
+                      className={`hover:bg-muted/30 transition-colors ${isSelected ? "bg-sky-500/5" : ""
+                        }`}
                     >
                       <td className="py-3 px-4">
                         <input
@@ -655,13 +684,12 @@ export default function ContestResultsPage() {
                         <button
                           type="button"
                           onClick={() => setSelectedAttemptAudit(attempt)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${
-                            isCriticalViolations
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium border transition-colors ${isCriticalViolations
                               ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30 hover:bg-rose-500/20"
                               : violationCount > 0
                                 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30 hover:bg-amber-500/20"
                                 : "bg-muted/40 text-muted-foreground border-border hover:bg-muted"
-                          }`}
+                            }`}
                           title="Click to view full security audit timeline"
                         >
                           <ShieldAlert className="w-3.5 h-3.5" />
