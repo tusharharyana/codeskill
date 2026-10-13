@@ -3,35 +3,10 @@ export declare class AdminCompaniesController {
     private readonly adminService;
     constructor(adminService: AdminService);
     getCompanies(page: string, limit: string, search: string): Promise<{
-        companies: {
-            _id: string;
-            id: string;
-            mongoId: string;
-            name: string;
-            username: string;
-            logo: string;
-            coverImage: string;
-            industry: string;
-            website: string;
-            description: string;
-            headquarters: string;
-            companySize: string;
-            foundedYear: number;
-            email: string;
-            phone: string;
-            socialLinks: Record<string, string>;
-            techStack: string[];
-            benefits: string[];
-            hiringStatus: string;
-            isVerified: boolean;
-            createdBy: import("../../database/entities/user.entity").User;
-            created_by_id: string;
-            createdAt: Date;
-            updatedAt: Date;
-        }[];
+        companies: any;
         total: number;
         page: number;
-        pages: number;
+        pages: any;
     }>;
     createCompany(body: any): Promise<{
         success: boolean;

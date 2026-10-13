@@ -69,7 +69,10 @@ const navItems = [
   },
   { name: "Results & Scores", href: "/admin/candidates", icon: BarChart3 },
   { name: "Cognitive Games", href: "/admin/games", icon: Gamepad2 },
-  { name: "Contests", href: "/admin/contests", icon: Trophy },
+  { name: "Contests", href: "/admin/contests", icon: Trophy, subItems: [
+    { name: "All Contests", href: "/admin/contests" },
+    { name: "Contest Results", href: "/admin/contests/results" },
+  ] },
   { name: "Companies", href: "/admin/companies", icon: Building2 },
   { name: "Universities", href: "/admin/universities", icon: BookOpen },
   { name: "Settings", href: "/admin/settings", icon: Settings },

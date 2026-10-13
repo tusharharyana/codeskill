@@ -35,6 +35,12 @@ export class AdminContestsController {
     );
   }
 
+  @Get('results')
+  @ApiOperation({ summary: 'Get contest participant results' })
+  async getContestResults(@Query('contestId') contestId?: string) {
+    return this.adminService.getContestResults(contestId);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a contest by ID' })
   async getContest(@Param('id') id: string) {

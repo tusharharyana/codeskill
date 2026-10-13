@@ -15,6 +15,7 @@ import { ProblemStatement } from '../database/entities/problem-statement.entity'
 import { ProblemConfig } from '../database/entities/problem-config.entity';
 import { ProblemTestCase } from '../database/entities/problem-testcase.entity';
 import { Contest } from '../database/entities/contest.entity';
+import { ContestAttempt } from '../database/entities/contest-attempt.entity';
 import { Company } from '../database/entities/company.entity';
 import { University } from '../database/entities/university.entity';
 import { Submission } from '../database/entities/submission.entity';
@@ -31,6 +32,7 @@ import { Question } from '../database/entities/question.entity';
       ProblemConfig,
       ProblemTestCase,
       Contest,
+      ContestAttempt,
       Company,
       University,
       Submission,

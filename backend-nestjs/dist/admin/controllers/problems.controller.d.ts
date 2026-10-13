@@ -3,31 +3,10 @@ export declare class AdminProblemsController {
     private readonly adminService;
     constructor(adminService: AdminService);
     getProblems(page: string, limit: string, search: string): Promise<{
-        problems: {
-            _id: string;
-            id: string;
-            mongoId: string;
-            title: string;
-            slug: string;
-            difficulty: string;
-            categories: string[];
-            tags: string[];
-            author: import("../../database/entities/user.entity").User;
-            author_id: string;
-            visibility: string;
-            metaTitle: string;
-            metaDescription: string;
-            keywords: string[];
-            stats: Record<string, any>;
-            statement: import("../../database/entities/problem-statement.entity").ProblemStatement;
-            config: import("../../database/entities/problem-config.entity").ProblemConfig;
-            testCases: import("../../database/entities/problem-testcase.entity").ProblemTestCase;
-            createdAt: Date;
-            updatedAt: Date;
-        }[];
+        problems: any;
         total: number;
         page: number;
-        pages: number;
+        pages: any;
     }>;
     getProblem(id: string): Promise<{
         _id: string;

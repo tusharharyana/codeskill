@@ -25,6 +25,30 @@ export declare class AdminContestsController {
         page: number;
         pages: number;
     }>;
+    getContestResults(contestId?: string): Promise<{
+        contests: {
+            id: string;
+            _id: string;
+            title: string;
+            slug: string;
+            startTime: Date;
+            endTime: Date;
+            totalProblems: number;
+            participants: {
+                rank: number;
+                id: string;
+                name: string;
+                email: string;
+                uid: string;
+                status: string;
+                startedAt: Date | null;
+                submittedAt: Date | null;
+                warnings: number;
+                solved: number;
+                submissions: number;
+            }[];
+        }[];
+    }>;
     getContest(id: string): Promise<{
         _id: string;
         id: string;

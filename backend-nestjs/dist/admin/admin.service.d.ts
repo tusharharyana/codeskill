@@ -5,6 +5,7 @@ import { ProblemStatement } from '../database/entities/problem-statement.entity'
 import { ProblemConfig } from '../database/entities/problem-config.entity';
 import { ProblemTestCase } from '../database/entities/problem-testcase.entity';
 import { Contest } from '../database/entities/contest.entity';
+import { ContestAttempt } from '../database/entities/contest-attempt.entity';
 import { Company } from '../database/entities/company.entity';
 import { University } from '../database/entities/university.entity';
 import { Submission } from '../database/entities/submission.entity';
@@ -18,13 +19,14 @@ export declare class AdminService {
     private readonly configModel;
     private readonly testCaseModel;
     private readonly contestModel;
+    private readonly contestAttemptModel;
     private readonly companyModel;
     private readonly universityModel;
     private readonly submissionModel;
     private readonly assessmentModel;
     private readonly questionModel;
     private readonly cacheService;
-    constructor(userRepo: Repository<User>, problemModel: Repository<ProblemMetadata>, statementModel: Repository<ProblemStatement>, configModel: Repository<ProblemConfig>, testCaseModel: Repository<ProblemTestCase>, contestModel: Repository<Contest>, companyModel: Repository<Company>, universityModel: Repository<University>, submissionModel: Repository<Submission>, assessmentModel: Repository<Assessment>, questionModel: Repository<Question>, cacheService: CacheService);
+    constructor(userRepo: Repository<User>, problemModel: Repository<ProblemMetadata>, statementModel: Repository<ProblemStatement>, configModel: Repository<ProblemConfig>, testCaseModel: Repository<ProblemTestCase>, contestModel: Repository<Contest>, contestAttemptModel: Repository<ContestAttempt>, companyModel: Repository<Company>, universityModel: Repository<University>, submissionModel: Repository<Submission>, assessmentModel: Repository<Assessment>, questionModel: Repository<Question>, cacheService: CacheService);
     getDashboardStats(): Promise<{
         stats: {
             totalUsers: number;
@@ -553,6 +555,30 @@ export declare class AdminService {
         participants: string[];
         createdAt: Date;
         updatedAt: Date;
+    }>;
+    getContestResults(contestId?: string): Promise<{
+        contests: {
+            id: string;
+            _id: string;
+            title: string;
+            slug: string;
+            startTime: Date;
+            endTime: Date;
+            totalProblems: number;
+            participants: {
+                rank: number;
+                id: string;
+                name: string;
+                email: string;
+                uid: string;
+                status: string;
+                startedAt: Date | null;
+                submittedAt: Date | null;
+                warnings: number;
+                solved: number;
+                submissions: number;
+            }[];
+        }[];
     }>;
     deleteContest(id: string): Promise<{
         success: boolean;

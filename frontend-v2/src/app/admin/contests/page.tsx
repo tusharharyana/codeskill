@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { adminContestsAPI } from "@/config/api";
 import Link from "next/link";
-import { Plus, Search, Edit2, Trash2, Eye, Calendar, Clock } from "lucide-react";
+import { Plus, Search, Edit2, Trash2, Eye, Calendar, Clock, Award } from "lucide-react";
 
 export default function ContestsAdminPage() {
   const [contests, setContests] = useState<any[]>([]);
@@ -174,6 +174,7 @@ export default function ContestsAdminPage() {
                           <Link href={`/contests/${contest.slug}`} target="_blank" className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-muted rounded-md transition-colors" title="View Contest">
                             <Eye className="w-4 h-4" />
                           </Link>
+                          <Link href={`/admin/contests/results?contest=${encodeURIComponent(contest._id || contest.id)}`} className="p-1.5 text-muted-foreground hover:text-amber-600 hover:bg-amber-500/10 rounded-md transition-colors" title="View Results"><Award className="w-4 h-4" /></Link>
                           {(contest._id || contest.id) ? <Link href={`/admin/contests/${encodeURIComponent(contest._id || contest.id)}/edit`} className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary/10 rounded-md transition-colors" title="Edit Contest" aria-label={`Edit ${contest.title}`}>
                             <Edit2 className="w-4 h-4" />
                           </Link> : <button type="button" disabled title="Contest ID is missing" aria-label="Edit unavailable" className="p-1.5 text-muted-foreground opacity-50"><Edit2 className="w-4 h-4" /></button>}

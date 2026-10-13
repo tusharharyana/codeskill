@@ -26,6 +26,9 @@ let AdminContestsController = class AdminContestsController {
     async getContests(page, limit, search) {
         return this.adminService.getContests(parseInt(page, 10) || 1, parseInt(limit, 10) || 20, search);
     }
+    async getContestResults(contestId) {
+        return this.adminService.getContestResults(contestId);
+    }
     async getContest(id) {
         return this.adminService.getContestById(id);
     }
@@ -50,6 +53,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", Promise)
 ], AdminContestsController.prototype, "getContests", null);
+__decorate([
+    (0, common_1.Get)('results'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get contest participant results' }),
+    __param(0, (0, common_1.Query)('contestId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], AdminContestsController.prototype, "getContestResults", null);
 __decorate([
     (0, common_1.Get)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Get a contest by ID' }),

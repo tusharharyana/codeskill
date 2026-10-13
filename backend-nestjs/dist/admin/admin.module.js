@@ -23,6 +23,7 @@ const problem_statement_entity_1 = require("../database/entities/problem-stateme
 const problem_config_entity_1 = require("../database/entities/problem-config.entity");
 const problem_testcase_entity_1 = require("../database/entities/problem-testcase.entity");
 const contest_entity_1 = require("../database/entities/contest.entity");
+const contest_attempt_entity_1 = require("../database/entities/contest-attempt.entity");
 const company_entity_1 = require("../database/entities/company.entity");
 const university_entity_1 = require("../database/entities/university.entity");
 const submission_entity_1 = require("../database/entities/submission.entity");
@@ -42,6 +43,7 @@ exports.AdminModule = AdminModule = __decorate([
                 problem_config_entity_1.ProblemConfig,
                 problem_testcase_entity_1.ProblemTestCase,
                 contest_entity_1.Contest,
+                contest_attempt_entity_1.ContestAttempt,
                 company_entity_1.Company,
                 university_entity_1.University,
                 submission_entity_1.Submission,

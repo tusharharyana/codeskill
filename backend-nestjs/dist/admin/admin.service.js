@@ -22,6 +22,7 @@ const problem_statement_entity_1 = require("../database/entities/problem-stateme
 const problem_config_entity_1 = require("../database/entities/problem-config.entity");
 const problem_testcase_entity_1 = require("../database/entities/problem-testcase.entity");
 const contest_entity_1 = require("../database/entities/contest.entity");
+const contest_attempt_entity_1 = require("../database/entities/contest-attempt.entity");
 const company_entity_1 = require("../database/entities/company.entity");
 const university_entity_1 = require("../database/entities/university.entity");
 const submission_entity_1 = require("../database/entities/submission.entity");
@@ -35,19 +36,21 @@ let AdminService = class AdminService {
     configModel;
     testCaseModel;
     contestModel;
+    contestAttemptModel;
     companyModel;
     universityModel;
     submissionModel;
     assessmentModel;
     questionModel;
     cacheService;
-    constructor(userRepo, problemModel, statementModel, configModel, testCaseModel, contestModel, companyModel, universityModel, submissionModel, assessmentModel, questionModel, cacheService) {
+    constructor(userRepo, problemModel, statementModel, configModel, testCaseModel, contestModel, contestAttemptModel, companyModel, universityModel, submissionModel, assessmentModel, questionModel, cacheService) {
         this.userRepo = userRepo;
         this.problemModel = problemModel;
         this.statementModel = statementModel;
         this.configModel = configModel;
         this.testCaseModel = testCaseModel;
         this.contestModel = contestModel;
+        this.contestAttemptModel = contestAttemptModel;
         this.companyModel = companyModel;
         this.universityModel = universityModel;
         this.submissionModel = submissionModel;
@@ -214,6 +217,51 @@ let AdminService = class AdminService {
         if (!contest)
             throw new common_1.NotFoundException('Contest not found');
         return { ...contest, _id: contest.id };
+    }
+    async getContestResults(contestId) {
+        const contests = contestId
+            ? [await this.contestModel.findOne({ where: this.contestLookup(contestId) })]
+            : await this.contestModel.find({ order: { endTime: 'DESC' } });
+        const availableContests = contests.filter((contest) => !!contest);
+        if (contestId && !availableContests.length)
+            throw new common_1.NotFoundException('Contest not found');
+        const results = await Promise.all(availableContests.map(async (contest) => {
+            const attempts = await this.contestAttemptModel.find({
+                where: { contest_id: contest.id }, relations: { user: true }, order: { startedAt: 'ASC' },
+            });
+            const participantIds = [...new Set([...(contest.participants || []), ...attempts.map((attempt) => attempt.user_id)])].filter(Boolean);
+            const users = participantIds.length
+                ? await this.userRepo.createQueryBuilder('user')
+                    .where('user.id IN (:...participantIds) OR user.mongoId IN (:...participantIds)', { participantIds })
+                    .getMany()
+                : [];
+            const userById = new Map();
+            users.forEach((user) => { userById.set(user.id, user); if (user.mongoId)
+                userById.set(user.mongoId, user); });
+            const submissions = contest.problems?.length
+                ? await this.submissionModel.createQueryBuilder('submission')
+                    .where('submission.problemId IN (:...problemIds)', { problemIds: contest.problems })
+                    .andWhere('submission.createdAt >= :startTime', { startTime: contest.startTime })
+                    .andWhere('submission.createdAt <= :endTime', { endTime: contest.endTime })
+                    .getMany()
+                : [];
+            const submissionsByUser = new Map();
+            submissions.forEach((submission) => submissionsByUser.set(submission.userId, [...(submissionsByUser.get(submission.userId) || []), submission]));
+            const participants = participantIds.map((id) => {
+                const participantSubmissions = submissionsByUser.get(id) || [];
+                const attempt = attempts.find((entry) => entry.user_id === id);
+                const user = userById.get(id);
+                return {
+                    id, name: user?.name || 'Unknown student', email: user?.email || '—', uid: user?.uid || '—',
+                    status: attempt?.status || 'Registered', startedAt: attempt?.startedAt || null, submittedAt: attempt?.submittedAt || null,
+                    warnings: attempt?.warnings || 0,
+                    solved: new Set(participantSubmissions.filter((submission) => submission.status === 'Accepted').map((submission) => submission.problemId)).size,
+                    submissions: participantSubmissions.length,
+                };
+            }).sort((left, right) => right.solved - left.solved || left.submissions - right.submissions || left.name.localeCompare(right.name));
+            return { id: contest.id, _id: contest.id, title: contest.title, slug: contest.slug, startTime: contest.startTime, endTime: contest.endTime, totalProblems: contest.problems?.length || 0, participants: participants.map((participant, index) => ({ ...participant, rank: index + 1 })) };
+        }));
+        return { contests: results };
     }
     async deleteContest(id) {
         const contest = await this.contestModel.findOne({
@@ -583,12 +631,14 @@ exports.AdminService = AdminService = __decorate([
     __param(3, (0, typeorm_1.InjectRepository)(problem_config_entity_1.ProblemConfig)),
     __param(4, (0, typeorm_1.InjectRepository)(problem_testcase_entity_1.ProblemTestCase)),
     __param(5, (0, typeorm_1.InjectRepository)(contest_entity_1.Contest)),
-    __param(6, (0, typeorm_1.InjectRepository)(company_entity_1.Company)),
-    __param(7, (0, typeorm_1.InjectRepository)(university_entity_1.University)),
-    __param(8, (0, typeorm_1.InjectRepository)(submission_entity_1.Submission)),
-    __param(9, (0, typeorm_1.InjectRepository)(assessment_entity_1.Assessment)),
-    __param(10, (0, typeorm_1.InjectRepository)(question_entity_1.Question)),
+    __param(6, (0, typeorm_1.InjectRepository)(contest_attempt_entity_1.ContestAttempt)),
+    __param(7, (0, typeorm_1.InjectRepository)(company_entity_1.Company)),
+    __param(8, (0, typeorm_1.InjectRepository)(university_entity_1.University)),
+    __param(9, (0, typeorm_1.InjectRepository)(submission_entity_1.Submission)),
+    __param(10, (0, typeorm_1.InjectRepository)(assessment_entity_1.Assessment)),
+    __param(11, (0, typeorm_1.InjectRepository)(question_entity_1.Question)),
     __metadata("design:paramtypes", [typeorm_2.Repository,
+        typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,
         typeorm_2.Repository,

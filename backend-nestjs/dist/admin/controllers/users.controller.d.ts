@@ -4,74 +4,10 @@ export declare class AdminUsersController {
     constructor(adminService: AdminService);
     getUsers(page: string, limit: string, search: string, adminsOnly: string): Promise<{
         success: boolean;
-        users: {
-            _id: string;
-            id: string;
-            mongoId: string;
-            name: string;
-            username?: string;
-            email: string;
-            role: string;
-            uid?: string;
-            forcePasswordChange: boolean;
-            isAssessmentStudent: boolean;
-            mfaEnabled: boolean;
-            mfaSecret?: string;
-            isActive: boolean;
-            studentProfile: {
-                university?: string;
-                department?: string;
-                course?: string;
-                semester?: number;
-                section?: string;
-                group?: string;
-                year?: number;
-                batch?: string;
-            };
-            authProvider: string;
-            googleId?: string;
-            githubId?: string;
-            linkedinId?: string;
-            avatar: string;
-            bio: string;
-            isAdmin: boolean;
-            profile: {
-                institution?: string;
-                role?: string;
-                preferredLanguage?: string;
-                theme?: string;
-                fontSize?: number;
-            };
-            stats: {
-                totalSolved?: number;
-                easySolved?: number;
-                mediumSolved?: number;
-                hardSolved?: number;
-                dsaSolved?: number;
-                sqlSolved?: number;
-                jsSolved?: number;
-                currentStreak?: number;
-                longestStreak?: number;
-                totalSubmissions?: number;
-                acceptedSubmissions?: number;
-                xp?: number;
-            };
-            solvedProblems: string[];
-            bookmarkedProblems: string[];
-            badges: {
-                badgeId: string;
-                unlockedAt: Date;
-            }[];
-            activityMap: Record<string, number>;
-            notes: Record<string, string>;
-            lastActive: Date;
-            lastSolveDate?: Date;
-            createdAt: Date;
-            updatedAt: Date;
-        }[];
+        users: any;
         total: number;
         page: number;
-        pages: number;
+        pages: any;
     }>;
     updateUserRole(id: string, body: any): Promise<{
         success: boolean;
@@ -209,43 +145,10 @@ export declare class AdminUsersController {
                 updatedAt: Date;
             };
             stats: {
-                totalSubmissions: number;
-                accepted: number;
+                totalSubmissions: any;
+                accepted: any;
             };
-            recentSubmissions: {
-                _id: string;
-                id: string;
-                user: import("../../database/entities/user.entity").User;
-                userId: string;
-                problem: import("../../database/entities/problem.entity").Problem;
-                problemId: string;
-                code: string;
-                language: string;
-                status: string;
-                executionTime?: number;
-                memoryUsed?: number;
-                testsPassed?: number;
-                totalTests?: number;
-                errorMessage?: string;
-                testResults: Array<{
-                    testId: string;
-                    passed: boolean;
-                    executionTime?: number;
-                    memoryUsed?: number;
-                    error?: string;
-                }>;
-                mongoId?: string;
-                runtime?: number;
-                memory?: number;
-                testCasesPassed?: number;
-                totalTestCases?: number;
-                compileOutput?: string;
-                queuedAt?: Date;
-                startedAt?: Date;
-                completedAt?: Date;
-                createdAt: Date;
-                updatedAt: Date;
-            }[];
+            recentSubmissions: any;
         };
     }>;
     promoteUser(id: string): Promise<{

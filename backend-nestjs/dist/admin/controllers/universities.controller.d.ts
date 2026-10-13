@@ -3,30 +3,10 @@ export declare class AdminUniversitiesController {
     private readonly adminService;
     constructor(adminService: AdminService);
     getUniversities(page: string, limit: string, search: string): Promise<{
-        universities: {
-            _id: string;
-            id: string;
-            mongoId: string;
-            name: string;
-            username: string;
-            domain: string;
-            logo: string;
-            coverImage: string;
-            location: string;
-            website: string;
-            description: string;
-            contactEmail: string;
-            tier: string;
-            establishedYear: number;
-            isVerified: boolean;
-            createdBy: import("../../database/entities/user.entity").User;
-            created_by_id: string;
-            createdAt: Date;
-            updatedAt: Date;
-        }[];
+        universities: any;
         total: number;
         page: number;
-        pages: number;
+        pages: any;
     }>;
     createUniversity(body: {
         name: string;

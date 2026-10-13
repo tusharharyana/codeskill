@@ -212,6 +212,7 @@ export const adminContestsAPI = {
   create: (data: any) => api.post("/admin/contests", data),
   update: (id: string, data: any) => api.put(`/admin/contests/${id}`, data),
   delete: (id: string) => api.delete(`/admin/contests/${id}`),
+  getResults: (contestId?: string) => api.get(`/admin/contests/results${contestId ? `?contestId=${encodeURIComponent(contestId)}` : ""}`),
 };
 
 export const adminUsersAPI = {

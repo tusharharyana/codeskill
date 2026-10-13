@@ -71,6 +71,7 @@ describe('Admin contest editing', () => {
       {} as never,
       {} as never,
       {} as never,
+      {} as never,
     );
   });
 
