@@ -31,7 +31,71 @@ export class AssessmentsService {
     private readonly auditLogRepo: Repository<AuditLog>,
     @Optional()
     private readonly executionService?: ExecutionService,
-  ) {}
+  ) { }
+
+  private shuffleList<T>(items: T[]): T[] {
+    const next = [...items];
+    for (let i = next.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [next[i], next[j]] = [next[j], next[i]];
+    }
+    return next;
+  }
+
+  private isOptionShuffledQuestion(question: Question | null | undefined): boolean {
+    if (!question || !Array.isArray(question.options) || question.options.length < 2) {
+      return false;
+    }
+
+    const qType = String(question.questionType || '').toLowerCase();
+    if (['coding', 'algorithmic', 'dsa', 'subjective', 'descriptive', 'essay', 'short_answer', 'fill_in_the_blank', 'matching'].includes(qType)) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private buildOptionOrder(question: Question | null | undefined): number[] | null {
+    if (!this.isOptionShuffledQuestion(question)) {
+      return null;
+    }
+
+    const order = question.options.map((_, index) => index);
+    return this.shuffleList(order);
+  }
+
+  private getQuestionOptionOrderByQuestionId(attempt: any, questionId: string): number[] | null {
+    const response = (attempt?.responses || []).find((item: any) => String(item.questionId) === String(questionId));
+    const optionOrder = response?.optionOrder;
+    return Array.isArray(optionOrder) && optionOrder.length > 0 ? optionOrder : null;
+  }
+
+  private mapDisplayedAnswerToCanonical(
+    selectedAnswer: number | number[] | undefined,
+    optionOrder: number[] | null,
+  ): number | number[] | undefined {
+    if (selectedAnswer === undefined || selectedAnswer === null) {
+      return selectedAnswer;
+    }
+
+    if (Array.isArray(selectedAnswer)) {
+      return selectedAnswer.map((value) => {
+        if (value === undefined || value === null || value < 0) return value;
+        if (optionOrder && value < optionOrder.length) return optionOrder[value];
+        return value;
+      });
+    }
+
+    if (selectedAnswer < 0) {
+      return selectedAnswer;
+    }
+
+    if (optionOrder && selectedAnswer < optionOrder.length) {
+      return optionOrder[selectedAnswer];
+    }
+
+    return selectedAnswer;
+  }
 
   // -------------------------------------------------------------
   // ADMIN METHODS
@@ -118,8 +182,8 @@ export class AssessmentsService {
       targetCourses: dto.targetCourses || [],
       startTime: dto.startTime ? new Date(dto.startTime) : undefined,
       endTime: dto.endTime ? new Date(dto.endTime) : undefined,
-      shuffleQuestions: dto.shuffleQuestions ?? true,
-      shuffleOptions: dto.shuffleOptions ?? true,
+      shuffleQuestions: true,
+      shuffleOptions: true,
       showResultImmediately: dto.showResultImmediately ?? true,
       allowReview: dto.allowReview ?? true,
       allowedAttempts:
@@ -273,10 +337,8 @@ export class AssessmentsService {
     if (dto.endTime !== undefined)
       assessment.endTime = dto.endTime ? new Date(dto.endTime) : undefined;
     if (dto.status !== undefined) assessment.status = dto.status;
-    if (dto.shuffleQuestions !== undefined)
-      assessment.shuffleQuestions = dto.shuffleQuestions;
-    if (dto.shuffleOptions !== undefined)
-      assessment.shuffleOptions = dto.shuffleOptions;
+    assessment.shuffleQuestions = true;
+    assessment.shuffleOptions = true;
     if (dto.showResultImmediately !== undefined)
       assessment.showResultImmediately = dto.showResultImmediately;
     if (dto.allowReview !== undefined) assessment.allowReview = dto.allowReview;
@@ -418,10 +480,10 @@ export class AssessmentsService {
           submitted.length > 0
             ? [...submitted].sort((a, b) => (b.score || 0) - (a.score || 0))[0]
             : [...studentAttempts].sort(
-                (a, b) =>
-                  new Date(b.createdAt || 0).getTime() -
-                  new Date(a.createdAt || 0).getTime(),
-              )[0];
+              (a, b) =>
+                new Date(b.createdAt || 0).getTime() -
+                new Date(a.createdAt || 0).getTime(),
+            )[0];
 
         const maxScore =
           submitted.length > 0
@@ -471,11 +533,11 @@ export class AssessmentsService {
     const avgScore =
       submittedCount > 0
         ? Number(
-            (
-              submittedCandidates.reduce((sum, c) => sum + (c.score || 0), 0) /
-              submittedCount
-            ).toFixed(1),
-          )
+          (
+            submittedCandidates.reduce((sum, c) => sum + (c.score || 0), 0) /
+            submittedCount
+          ).toFixed(1),
+        )
         : 0;
 
     return {
@@ -717,15 +779,15 @@ export class AssessmentsService {
       },
       attempt: latestAttempt
         ? {
-            _id: latestAttempt.id,
-            status: latestAttempt.status,
-            score: latestAttempt.score,
-            percentage: latestAttempt.percentage,
-            passed: latestAttempt.passed,
-            startedAt: latestAttempt.startedAt,
-            submittedAt: latestAttempt.submittedAt,
-            attemptNumber: latestAttempt.attemptNumber,
-          }
+          _id: latestAttempt.id,
+          status: latestAttempt.status,
+          score: latestAttempt.score,
+          percentage: latestAttempt.percentage,
+          passed: latestAttempt.passed,
+          startedAt: latestAttempt.startedAt,
+          submittedAt: latestAttempt.submittedAt,
+          attemptNumber: latestAttempt.attemptNumber,
+        }
         : null,
       canRetake,
       completedAttemptsCount: completedCount,
@@ -762,8 +824,8 @@ export class AssessmentsService {
     const questionsList =
       questionIds.length > 0
         ? await this.questionRepo.find({
-            where: [{ id: In(questionIds) }, { mongoId: In(questionIds) }],
-          })
+          where: [{ id: In(questionIds) }, { mongoId: In(questionIds) }],
+        })
         : [];
 
     const studentId = String(studentUser.id || studentUser._id);
@@ -807,10 +869,7 @@ export class AssessmentsService {
         previousSubmitted.length > 0 ? previousSubmitted[0].score || 0 : 0;
       const attemptNum = previousSubmitted.length + 1;
 
-      let orderedIds = questionsList.map((q) => q.id);
-      if (assessment.shuffleQuestions) {
-        orderedIds = [...orderedIds].sort(() => Math.random() - 0.5);
-      }
+      const orderedIds = this.shuffleList(questionsList.map((q) => q.id));
 
       attempt = this.attemptRepo.create({
         assessmentId: assessment.id,
@@ -824,24 +883,39 @@ export class AssessmentsService {
         highestScore: highestPreviousScore,
         questionOrder: orderedIds,
         maxScore: assessment.totalMarks,
-        responses: orderedIds.map((qId) => ({
-          questionId: qId,
-          selectedAnswer: -1,
-          isCorrect: false,
-          marksAwarded: 0,
-          timeSpentSeconds: 0,
-          status: 'unvisited',
-        })),
+        responses: orderedIds.map((qId) => {
+          const q = questionsList.find((item) => item.id === qId || item.mongoId === qId);
+          const optionOrder = this.buildOptionOrder(q || undefined);
+          return {
+            questionId: qId,
+            selectedAnswer: -1,
+            isCorrect: false,
+            marksAwarded: 0,
+            timeSpentSeconds: 0,
+            status: 'unvisited',
+            optionOrder,
+          };
+        }),
       });
 
       await this.attemptRepo.save(attempt);
     }
 
     const qMap = new Map(questionsList.map((q) => [q.id, q]));
+    const attemptOptionOrder = new Map(
+      (attempt.responses || []).map((response: any) => [String(response.questionId), response.optionOrder || null]),
+    );
+
     const sanitizedQuestions = (attempt.questionOrder || [])
       .map((qId, index) => {
         const q = qMap.get(String(qId));
         if (!q) return null;
+
+        const savedOptionOrder = attemptOptionOrder.get(String(q.id));
+        const displayOptionOrder = Array.isArray(savedOptionOrder) && savedOptionOrder.length === (q.options || []).length
+          ? savedOptionOrder
+          : this.buildOptionOrder(q);
+
         return {
           _id: q.id,
           id: q.id,
@@ -854,9 +928,15 @@ export class AssessmentsService {
           marks: q.marks || 1,
           negativeMarks: assessment.negativeMarking ? q.negativeMarks || 0 : 0,
           options: Array.isArray(q.options)
-            ? q.options.map((opt: any) =>
-                typeof opt === 'string' ? opt : opt?.text || String(opt || ''),
+            ? (displayOptionOrder && displayOptionOrder.length > 0
+              ? displayOptionOrder.map((optionIndex: number) =>
+                typeof q.options[optionIndex] === 'string'
+                  ? q.options[optionIndex]
+                  : (q.options[optionIndex] as any)?.text || String(q.options[optionIndex] || ''),
               )
+              : q.options.map((opt: any) =>
+                typeof opt === 'string' ? opt : opt?.text || String(opt || ''),
+              ))
             : [],
           codeSnippet: q.codeSnippet,
           starterCode:
@@ -936,6 +1016,10 @@ export class AssessmentsService {
     }
 
     if (dto.responses && Array.isArray(dto.responses)) {
+      const optionOrderByQuestion = new Map(
+        (attempt.responses || []).map((existingResponse: any) => [String(existingResponse.questionId), existingResponse.optionOrder || null]),
+      );
+
       attempt.responses = dto.responses.map((r) => ({
         questionId: String(r.questionId),
         selectedAnswer: r.selectedAnswer ?? -1,
@@ -951,9 +1035,10 @@ export class AssessmentsService {
         status:
           r.status ||
           ((r.selectedAnswer !== undefined && r.selectedAnswer >= 0) ||
-          (r.code && r.code.trim().length > 0)
+            (r.code && r.code.trim().length > 0)
             ? 'answered'
             : 'unvisited'),
+        optionOrder: optionOrderByQuestion.get(String(r.questionId)) || null,
       }));
     }
 
@@ -1021,10 +1106,13 @@ export class AssessmentsService {
     const questions =
       questionIds.length > 0
         ? await this.questionRepo.find({
-            where: [{ id: In(questionIds) }, { mongoId: In(questionIds) }],
-          })
+          where: [{ id: In(questionIds) }, { mongoId: In(questionIds) }],
+        })
         : [];
     const questionMap = new Map(questions.map((q) => [q.id, q]));
+    const attemptOptionsByQuestion = new Map(
+      (attempt.responses || []).map((response: any) => [String(response.questionId), response.optionOrder || null]),
+    );
 
     let totalScore = 0;
     let totalAttempted = 0;
@@ -1047,6 +1135,12 @@ export class AssessmentsService {
         });
         continue;
       }
+
+      const optionOrder = attemptOptionsByQuestion.get(String(q.id)) || this.buildOptionOrder(q);
+      const canonicalSelectedAnswer = this.mapDisplayedAnswerToCanonical(r.selectedAnswer, optionOrder) as number | undefined;
+      const canonicalSelectedAnswers = Array.isArray(r.selectedAnswers)
+        ? (this.mapDisplayedAnswerToCanonical(r.selectedAnswers, optionOrder) as number[] | undefined) || []
+        : undefined;
 
       const qType = (q.questionType || '').toLowerCase();
       const isCoding = qType === 'coding' || qType === 'algorithmic' || qType === 'dsa';
@@ -1107,10 +1201,10 @@ export class AssessmentsService {
         const isMulti = qType === 'multiple_choice' || (Array.isArray(q.correctAnswers) && q.correctAnswers.length > 0);
 
         if (isMulti) {
-          const selectedList = Array.isArray(r.selectedAnswers)
-            ? r.selectedAnswers
-            : r.selectedAnswer !== undefined && r.selectedAnswer >= 0
-              ? [r.selectedAnswer]
+          const selectedList = Array.isArray(canonicalSelectedAnswers)
+            ? canonicalSelectedAnswers
+            : canonicalSelectedAnswer !== undefined && canonicalSelectedAnswer >= 0
+              ? [canonicalSelectedAnswer]
               : [];
           isAttempted = selectedList.length > 0;
           if (isAttempted) {
@@ -1137,10 +1231,10 @@ export class AssessmentsService {
           }
         } else {
           // Single-choice MCQ
-          isAttempted = r.selectedAnswer !== undefined && r.selectedAnswer >= 0;
+          isAttempted = canonicalSelectedAnswer !== undefined && canonicalSelectedAnswer >= 0;
           if (isAttempted) {
             totalAttempted++;
-            isCorrect = r.selectedAnswer === q.correctAnswer;
+            isCorrect = canonicalSelectedAnswer === q.correctAnswer;
             if (isCorrect) {
               marksAwarded = q.marks || 1;
               totalCorrect++;
@@ -1159,8 +1253,10 @@ export class AssessmentsService {
 
       evaluatedResponses.push({
         questionId: q.id,
-        selectedAnswer: r.selectedAnswer ?? -1,
-        selectedAnswers: r.selectedAnswers,
+        selectedAnswer: canonicalSelectedAnswer ?? -1,
+        selectedAnswers: Array.isArray(canonicalSelectedAnswers)
+          ? canonicalSelectedAnswers
+          : undefined,
         code: r.code || '',
         language: r.language || 'python',
         testCasesPassed,
@@ -1281,8 +1377,8 @@ export class AssessmentsService {
     const questions =
       questionIds.length > 0
         ? await this.questionRepo.find({
-            where: [{ id: In(questionIds) }, { mongoId: In(questionIds) }],
-          })
+          where: [{ id: In(questionIds) }, { mongoId: In(questionIds) }],
+        })
         : [];
     const questionMap = new Map(questions.map((q) => [q.id, q]));
 

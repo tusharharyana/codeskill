@@ -1,5 +1,5 @@
 import { PistonUnavailableError } from '../execution/piston/piston.types';
-jest.mock('@nestjs/typeorm', () => ({ InjectRepository: () => () => {} }));
+jest.mock('@nestjs/typeorm', () => ({ InjectRepository: () => () => { } }));
 
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { AssessmentsService } from './assessments.service';
@@ -11,6 +11,7 @@ describe('Assessment Integrity & Server-Side Scoring (AUD-002, NEW-001, NEW-002,
     findOne: jest.fn(),
   };
   const mockAttemptRepo = {
+    create: jest.fn(),
     findOne: jest.fn(),
     find: jest.fn(),
     save: jest.fn(),
@@ -46,6 +47,7 @@ describe('Assessment Integrity & Server-Side Scoring (AUD-002, NEW-001, NEW-002,
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockAttemptRepo.create.mockImplementation((a) => a);
     mockAttemptRepo.save.mockImplementation((a) => Promise.resolve(a));
 
     service = new AssessmentsService(
@@ -240,5 +242,62 @@ describe('Assessment Integrity & Server-Side Scoring (AUD-002, NEW-001, NEW-002,
     // Total score is strictly calculated from server evaluations (0 + 2.5 = 2.5)
     expect(savedAttempt.score).toBe(2.5);
     expect((response as any).result.score).toBe(2.5);
+  });
+
+  it('keeps question and option order fixed per attempt while remapping selected answers to canonical indices', async () => {
+    const seededRandom = [0.85, 0.15, 0.75, 0.25, 0.65, 0.35, 0.9, 0.1];
+    const randomSpy = jest.spyOn(Math, 'random');
+    seededRandom.forEach((value) => randomSpy.mockReturnValueOnce(value));
+
+    mockAssessmentRepo.findOne.mockResolvedValue({
+      ...mockAssessment,
+      questions: ['q-mcq-1'],
+      shuffleQuestions: true,
+      shuffleOptions: true,
+    });
+    mockAttemptRepo.findOne.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      id: 'attempt-1',
+      assessmentId,
+      studentId: studentUser.id,
+      status: 'in_progress',
+      startedAt: new Date(Date.now() - 10000),
+      questionOrder: ['q-mcq-1'],
+      responses: [{ questionId: 'q-mcq-1', selectedAnswer: -1, optionOrder: [1, 0, 2] }],
+    });
+    mockAttemptRepo.find.mockResolvedValue([]);
+    mockQuestionRepo.find.mockResolvedValue([
+      {
+        id: 'q-mcq-1',
+        questionType: 'single_choice',
+        options: ['A', 'B', 'C'],
+        correctAnswer: 1,
+        marks: 5,
+        negativeMarks: 0,
+        topic: 'Math',
+        difficulty: 'easy',
+      },
+    ]);
+
+    const started = await service.startStudentAttempt(assessmentId, studentUser);
+    const displayedQuestion = started.questions[0];
+    expect(displayedQuestion.options).toEqual(['B', 'A', 'C']);
+
+    const response = await service.submitAttempt(
+      assessmentId,
+      {
+        responses: [{
+          questionId: 'q-mcq-1',
+          selectedAnswer: displayedQuestion.options.indexOf('B'),
+        }],
+      } as never,
+      studentUser,
+    );
+
+    expect((response as any).result.score).toBe(5);
+    const savedAttempt = mockAttemptRepo.save.mock.calls.at(-1)?.[0];
+    const savedResponse = savedAttempt.responses.find((r: any) => r.questionId === 'q-mcq-1');
+    expect(savedResponse.isCorrect).toBe(true);
+    expect(savedResponse.marksAwarded).toBe(5);
+    randomSpy.mockRestore();
   });
 });
