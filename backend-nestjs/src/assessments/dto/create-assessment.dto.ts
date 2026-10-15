@@ -15,11 +15,11 @@ import { Type } from 'class-transformer';
 export class AssessmentQuestionConfigDto {
   @IsString()
   @IsNotEmpty()
-  questionId: string;
+  questionId!: string;
 
   @IsNumber()
   @Type(() => Number)
-  marks: number;
+  marks!: number;
 
   @IsNumber()
   @Type(() => Number)
@@ -32,10 +32,31 @@ export class AssessmentQuestionConfigDto {
   order?: number;
 }
 
+export class AssessmentAutoSelectionDto {
+  @IsString()
+  @IsNotEmpty()
+  topic!: string;
+
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  easyCount!: number;
+
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  mediumCount!: number;
+
+  @IsInt()
+  @Min(0)
+  @Type(() => Number)
+  hardCount!: number;
+}
+
 export class AssessmentSectionDto {
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @IsString()
   @IsOptional()
@@ -54,7 +75,7 @@ export class AssessmentSectionDto {
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => AssessmentQuestionConfigDto)
-  questions: AssessmentQuestionConfigDto[];
+  questions!: AssessmentQuestionConfigDto[];
 
   @ValidateNested()
   @Type(() => AssessmentAutoSelectionDto)
@@ -62,35 +83,14 @@ export class AssessmentSectionDto {
   autoSelection?: AssessmentAutoSelectionDto;
 }
 
-export class AssessmentAutoSelectionDto {
-  @IsString()
-  @IsNotEmpty()
-  topic: string;
-
-  @IsInt()
-  @Min(0)
-  @Type(() => Number)
-  easyCount: number;
-
-  @IsInt()
-  @Min(0)
-  @Type(() => Number)
-  mediumCount: number;
-
-  @IsInt()
-  @Min(0)
-  @Type(() => Number)
-  hardCount: number;
-}
-
 export class CreateAssessmentDto {
   @IsString()
   @IsNotEmpty()
-  title: string;
+  title!: string;
 
   @IsString()
   @IsNotEmpty()
-  code: string;
+  code!: string;
 
   @IsString()
   @IsOptional()
@@ -109,7 +109,7 @@ export class CreateAssessmentDto {
   @IsNumber()
   @Type(() => Number)
   @Min(5)
-  durationMinutes: number;
+  durationMinutes!: number;
 
   @IsNumber()
   @Type(() => Number)
@@ -159,17 +159,12 @@ export class CreateAssessmentDto {
   @IsArray()
   @IsString({ each: true })
   @IsOptional()
-  targetGroups?: string[];
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
-  targetStudentIds?: string[];
-
-  @IsArray()
-  @IsString({ each: true })
-  @IsOptional()
   targetSemesters?: string[];
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  targetGroups?: string[];
 
   @IsOptional()
   startTime?: string;

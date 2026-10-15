@@ -25,9 +25,8 @@ export function Hero() {
             Practice data structures and algorithms, take proctored assessments, and prepare for technical interviews.
           </motion.p>
           <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }} className="flex w-full flex-col items-stretch gap-3.5 pt-1 sm:w-auto sm:flex-row sm:items-center">
-            <Link href="/login" className="group inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-6 text-sm font-bold text-white shadow-sm transition hover:scale-[1.02] hover:bg-emerald-800 hover:shadow-md active:scale-[0.98] dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400">
-              <span>Log In</span><ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
-            </Link>
+            {/* <Link href="/login" className="group inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-emerald-700 px-6 text-sm font-bold text-white shadow-sm transition hover:scale-[1.02] hover:bg-emerald-800 hover:shadow-md active:scale-[0.98] dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400">
+            </Link> */}
             <Link href="/assessments" className="inline-flex h-11 items-center justify-center gap-2 rounded-lg border border-slate-300 bg-white/85 px-6 text-sm font-semibold text-slate-800 shadow-sm backdrop-blur transition hover:border-emerald-300 hover:bg-emerald-50/80 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-800">
               View Assessments
             </Link>
