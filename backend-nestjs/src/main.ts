@@ -26,31 +26,49 @@ async function bootstrap() {
     winston.format.json(),
   );
 
+  const winstonTransports: winston.transport[] = [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.timestamp({ format: 'HH:mm:ss' }),
+        winston.format.printf(({ timestamp, level, message, context, stack }) => {
+          return `[${timestamp}] [${level}] ${context ? `[${context}] ` : ''}${message}${stack ? `\n${stack}` : ''}`;
+        }),
+      ),
+    }),
+    new winston.transports.File({
+      filename: path.join(logDir, 'error.log'),
+      level: 'error',
+      format: fileFormat,
+      maxsize: 10 * 1024 * 1024, // 10MB
+      maxFiles: 5,
+    }),
+    new winston.transports.File({
+      filename: path.join(logDir, 'combined.log'),
+      format: fileFormat,
+      maxsize: 20 * 1024 * 1024, // 20MB
+      maxFiles: 5,
+    }),
+  ];
+
+  if (process.env.AXIOM_TOKEN && process.env.AXIOM_DATASET) {
+    try {
+      const { AxiomWinstonTransport } = require('./observability/logger/axiom.winston-transport');
+      winstonTransports.push(
+        new AxiomWinstonTransport({
+          dataset: process.env.AXIOM_DATASET,
+          token: process.env.AXIOM_TOKEN,
+          edgeUrl: process.env.AXIOM_EDGE_URL || 'https://eu-central-1.aws.edge.axiom.co',
+          service: 'codeskill-backend',
+        }),
+      );
+    } catch {
+      // Fail-open if transport cannot be loaded
+    }
+  }
+
   const logger = WinstonModule.createLogger({
-    transports: [
-      new winston.transports.Console({
-        format: winston.format.combine(
-          winston.format.colorize(),
-          winston.format.timestamp({ format: 'HH:mm:ss' }),
-          winston.format.printf(({ timestamp, level, message, context, stack }) => {
-            return `[${timestamp}] [${level}] ${context ? `[${context}] ` : ''}${message}${stack ? `\n${stack}` : ''}`;
-          }),
-        ),
-      }),
-      new winston.transports.File({
-        filename: path.join(logDir, 'error.log'),
-        level: 'error',
-        format: fileFormat,
-        maxsize: 10 * 1024 * 1024, // 10MB
-        maxFiles: 5,
-      }),
-      new winston.transports.File({
-        filename: path.join(logDir, 'combined.log'),
-        format: fileFormat,
-        maxsize: 20 * 1024 * 1024, // 20MB
-        maxFiles: 5,
-      }),
-    ],
+    transports: winstonTransports,
   });
 
   process.on('unhandledRejection', (reason: any) => {
@@ -132,23 +150,35 @@ async function bootstrap() {
     }),
   );
 
-  // Swagger
-  const config = new DocumentBuilder()
-    .setTitle('CodeSkill API')
-    .setDescription(
-      'CodeSkill Online Judge — Chandigarh University Assessment Platform',
-    )
-    .setVersion('2.0.0')
-    .addBearerAuth()
-    .build();
-  const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api/docs', app, document);
+  // Swagger — disabled in production unless explicitly opted in via SWAGGER_ENABLED=true
+  const swaggerEnabled =
+    process.env.NODE_ENV !== 'production' ||
+    process.env.SWAGGER_ENABLED === 'true';
 
   const port = process.env.PORT || 5001;
+
+  if (swaggerEnabled) {
+    const config = new DocumentBuilder()
+      .setTitle('CodeSkill API')
+      .setDescription(
+        'CodeSkill Online Judge — Chandigarh University Assessment Platform',
+      )
+      .setVersion('2.0.0')
+      .addBearerAuth()
+      .build();
+    const document = SwaggerModule.createDocument(app, config);
+    SwaggerModule.setup('api/docs', app, document);
+  }
+
   await app.listen(port);
   console.log(`\n🚀 CodeSkill NestJS API running on port ${port}`);
   console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📖 Swagger docs: http://localhost:${port}/api/docs\n`);
+  if (swaggerEnabled) {
+    console.log(`📖 Swagger docs: http://localhost:${port}/api/docs`);
+  } else {
+    console.log(`📖 Swagger docs: DISABLED in production (set SWAGGER_ENABLED=true to enable)`);
+  }
+  console.log('');
 }
 bootstrap();
 
